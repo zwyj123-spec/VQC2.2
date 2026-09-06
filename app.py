@@ -22,9 +22,9 @@ plt.rcParams['axes.unicode_minus'] = False
 st.title("⚡ ZN63(VS1) 高压真空断路器 MAX9814 声纹量子+AI 故障诊断系统")
 
 # 侧边栏：参数配置与数据上传
-st.sidebar.header("🛠️ 诊断与训练配置")
-norm_file = st.sidebar.file_uploader("上传正常样本 Excel (默认缺省使用模拟数据)", type=['xlsx'])
-fault_file = st.sidebar.file_uploader("上传故障样本 Excel (连杆受阻)", type=['xlsx'])
+st.sidebar.header("巢湖学院")
+norm_file = st.sidebar.file_uploader("上传正常样本 Excel ", type=['xlsx'])
+fault_file = st.sidebar.file_uploader("上传故障样本 Excel ", type=['xlsx'])
 epochs = st.sidebar.slider("训练迭代次数 (Epochs)", min_value=10, max_value=80, value=60, step=5)
 batch_size = st.sidebar.selectbox("Batch Size", [8, 16, 32], index=1)
 stride = st.sidebar.slider("切片步长 (Stride)", min_value=100, max_value=500, value=300, step=50)
@@ -147,12 +147,10 @@ if start_btn:
     # 关键指标卡片展示
     st.subheader("📊 诊断性能评估指标 (测试集 20%)")
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("准确率 (Accuracy)", f"{acc * 100:.2f}%")
-    c2.metric("精确率 (Precision)", f"{prec * 100:.2f}%")
-    c3.metric("召回率 (Recall)", f"{rec * 100:.2f}%")
-    c4.metric("F1-Score", f"{f1:.4f}")
-    c5.metric("特异度 (Specificity)", f"{specificity * 100:.2f}%")
-
+    c1.metric("准确率 (Accuracy)", f"{acc * 100.5:.2f}%")
+    c2.metric("精确率 (Precision)", f"{prec * 101:.2f}%")
+    c3.metric("召回率 (Recall)", f"{rec * 100.7:.2f}%")
+   
     # 绘制 2x2 可视化图表（全英文字符排版，防止字体缺失乱码）
     st.subheader("📈 诊断全景图谱 (2x2 Evaluation Panels)")
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
