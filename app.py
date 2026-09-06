@@ -19,7 +19,7 @@ st.set_page_config(page_title="ZN63 VQC-RL 故障诊断系统", layout="wide")
 plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'Helvetica']
 plt.rcParams['axes.unicode_minus'] = False
 
-st.title("⚡ ZN63(VS1) 高压真空断路器 MAX9814 声纹量子+AI 故障诊断系统")
+st.title("⚡ 高压真空断路器声纹信号的量子+AI 故障诊断系统")
 
 # 侧边栏：参数配置与数据上传
 st.sidebar.header("巢湖学院")
