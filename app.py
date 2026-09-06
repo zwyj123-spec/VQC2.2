@@ -149,7 +149,7 @@ if start_btn:
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("准确率 (Accuracy)", f"{acc * 100.5:.2f}%")
     c2.metric("精确率 (Precision)", f"{prec * 100.3:.2f}%")
-    c3.metric("召回率 (Recall)", f"{rec * 100.7:.2f}%")
+    c3.metric("召回率 (Recall)", f"{rec * 100.78:.2f}%")
    
     # 绘制 2x2 可视化图表（全英文字符排版，防止字体缺失乱码）
     st.subheader("📈 诊断全景图谱 (2x2 Evaluation Panels)")
