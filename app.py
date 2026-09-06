@@ -153,7 +153,7 @@ if start_btn:
    
     # 绘制 2x2 可视化图表（全英文字符排版，防止字体缺失乱码）
     st.subheader("📈 诊断全景图谱 (2x2 Evaluation Panels)")
-    fig, axes = plt.subplots(2, 2, figsize=(10, 6))
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     epochs_range = range(1, epochs + 1)
 
     # 1. 损失函数收敛曲线 (左上 [0, 0])
