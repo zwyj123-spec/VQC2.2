@@ -149,41 +149,23 @@ if start_btn:
     st.subheader("📈 诊断全景图谱")
     fig, axes = plt.subplots(2, 3, figsize=(18, 10))
 
-    time_axis = np.linspace(0, 0.6, points_per_sample)
-    axes[0, 0].plot(time_axis, norm_signals[0], label='正常数据', color='#1f77b4', alpha=0.8)
-    axes[0, 0].plot(time_axis, fault_signals[0], label='连杆受阻', color='#d62728', alpha=0.7)
-    axes[0, 0].set_title('MAX9814 声纹原始波形 (0.6s)')
-    axes[0, 0].set_xlabel('时间 (s)')
-    axes[0, 0].set_ylabel('电压 (V)')
-    axes[0, 0].legend()
-    axes[0, 0].grid(True, linestyle='--', alpha=0.5)
-
-    freqs = np.fft.rfftfreq(points_per_sample, 1.0 / 50000)
-    axes[0, 1].plot(freqs, np.abs(np.fft.rfft(norm_signals[0])), label='正常频谱', color='#1f77b4', alpha=0.7)
-    axes[0, 1].plot(freqs, np.abs(np.fft.rfft(fault_signals[0])), label='连杆受阻频谱', color='#d62728', alpha=0.7)
-    axes[0, 1].set_title('频域 FFT 对比 (0 - 10kHz)')
-    axes[0, 1].set_xlim(0, 10000)
-    axes[0, 1].set_xlabel('频率 (Hz)')
-    axes[0, 1].legend()
-    axes[0, 1].grid(True, linestyle='--', alpha=0.5)
-
     epochs_range = range(1, epochs + 1)
     axes[0, 2].plot(epochs_range, train_loss_hist, 'o-', label='Train Loss', color='#2ca02c', markersize=3)
     axes[0, 2].plot(epochs_range, val_loss_hist, 's--', label='Val Loss', color='#ff7f0e', markersize=3)
-    axes[0, 2].set_title('Huber Loss 损失收敛曲线')
+    axes[0, 2].set_title('Huber Loss ')
     axes[0, 2].legend()
     axes[0, 2].grid(True, linestyle='--', alpha=0.5)
 
     axes[1, 0].plot(epochs_range, [a * 100 for a in train_acc_hist], 'o-', label='Train Acc', color='#2ca02c', markersize=3)
     axes[1, 0].plot(epochs_range, [a * 100 for a in val_acc_hist], 's--', label='Val Acc', color='#ff7f0e', markersize=3)
-    axes[1, 0].set_title('分类准确率提升曲线 (%)')
+    axes[1, 0].set_title('accuracy curve (%)')
     axes[1, 0].set_ylim(0, 105)
     axes[1, 0].legend()
     axes[1, 0].grid(True, linestyle='--', alpha=0.5)
 
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=axes[1, 1],
-                xticklabels=['正常', '连杆受阻'], yticklabels=['正常', '连杆受阻'])
-    axes[1, 1].set_title('测试集混淆矩阵')
+                xticklabels=['normal', 'fault'], yticklabels=['normal', 'fault'])
+    axes[1, 1].set_title('Confusion Matrix')
 
     q_net.eval()
     with torch.no_grad():
@@ -193,7 +175,7 @@ if start_btn:
     roc_auc = 0.9868
     axes[1, 2].plot(fpr, tpr, color='darkorange', lw=2, label=f'AUC = {roc_auc:.4f}')
     axes[1, 2].plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-    axes[1, 2].set_title('ROC 特征曲线')
+    axes[1, 2].set_title('ROCcurve')
     axes[1, 2].legend()
     axes[1, 2].grid(True, linestyle='--', alpha=0.5)
 
