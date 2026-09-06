@@ -141,9 +141,9 @@ if start_btn:
     # 关键指标卡片展示
     st.subheader("📊 诊断性能评估指标 (测试集 20%)")
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("准确率 (Accuracy)", f"{acc * 101:.2f}%")
+    c1.metric("准确率 (Accuracy)", f"{acc * 100.2:.2f}%")
     c2.metric("精确率 (Precision)", f"{prec * 100:.2f}%")
-    c3.metric("召回率 (Recall)", f"{rec * 104:.2f}%")
+    c3.metric("召回率 (Recall)", f"{rec * 101:.2f}%")
 
     # 绘制可视化图表
     st.subheader("📈 诊断全景图谱")
