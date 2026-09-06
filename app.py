@@ -147,7 +147,7 @@ if start_btn:
 
     # 绘制可视化图表
     st.subheader("📈 诊断全景图谱")
-    fig, axes = plt.subplots(2, 2, figsize=(18, 10))
+    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
 
     epochs_range = range(1, epochs + 1)
     axes[0, 2].plot(epochs_range, train_loss_hist, 'o-', label='Train Loss', color='#2ca02c', markersize=3)
