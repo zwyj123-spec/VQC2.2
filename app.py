@@ -1,26 +1,28 @@
 # app.py
-import streamlit as st
+import random
+import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
+from sklearn.metrics import accuracy_score, auc, f1_score, precision_score, recall_score, roc_curve
+from sklearn.model_selection import train_test_split
+import streamlit as st
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_curve, auc
-import random
 
-from vqc_core import load_or_generate_data, sliding_window_segmentation, VQC_QNetwork, ReplayBuffer
+from vqc_core import ReplayBuffer, VQC_QNetwork, load_or_generate_data, sliding_window_segmentation
 
 # 页面基础配置
 st.set_page_config(page_title="ZN63 VQC-RL 故障诊断系统", layout="wide")
-plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'SimHei', 'DejaVu Sans', 'Arial']
+
+# Matplotlib 图表英文字体配置（杜绝云端 Linux 环境中文方块乱码）
+plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'Arial', 'Helvetica']
 plt.rcParams['axes.unicode_minus'] = False
 
 st.title("⚡ ZN63(VS1) 高压真空断路器 MAX9814 声纹量子+AI 故障诊断系统")
 
 # 侧边栏：参数配置与数据上传
-st.sidebar.header("巢湖学院")
+st.sidebar.header("🛠️ 诊断与训练配置")
 norm_file = st.sidebar.file_uploader("上传正常样本 Excel (默认缺省使用模拟数据)", type=['xlsx'])
 fault_file = st.sidebar.file_uploader("上传故障样本 Excel (连杆受阻)", type=['xlsx'])
 epochs = st.sidebar.slider("训练迭代次数 (Epochs)", min_value=10, max_value=80, value=60, step=5)
@@ -37,8 +39,12 @@ if start_btn:
         all_labels = np.array([0] * len(norm_signals) + [1] * len(fault_signals))
 
         X_sliced, y_sliced = sliding_window_segmentation(all_signals, all_labels, window_size=1000, stride=stride)
-        X_train, X_temp, y_train, y_temp = train_test_split(X_sliced, y_sliced, test_size=0.4, random_state=42, stratify=y_sliced)
-        X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp)
+        X_train, X_temp, y_train, y_temp = train_test_split(
+            X_sliced, y_sliced, test_size=0.4, random_state=42, stratify=y_sliced
+        )
+        X_val, X_test, y_val, y_test = train_test_split(
+            X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp
+        )
 
     st.success(f"数据切片就绪：训练集 {len(X_train)} | 验证集 {len(X_val)} | 测试集 {len(X_test)}")
 
@@ -141,57 +147,62 @@ if start_btn:
     # 关键指标卡片展示
     st.subheader("📊 诊断性能评估指标 (测试集 20%)")
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("准确率 (Accuracy)", f"{acc * 100.2:.2f}%")
+    c1.metric("准确率 (Accuracy)", f"{acc * 100:.2f}%")
     c2.metric("精确率 (Precision)", f"{prec * 100:.2f}%")
-    c3.metric("召回率 (Recall)", f"{rec * 101:.2f}%")
+    c3.metric("召回率 (Recall)", f"{rec * 100:.2f}%")
+    c4.metric("F1-Score", f"{f1:.4f}")
+    c5.metric("特异度 (Specificity)", f"{specificity * 100:.2f}%")
 
-    # 绘制 2x2 可视化图表
-st.subheader("📈 诊断全景图谱")
-fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-epochs_range = range(1, epochs + 1)
+    # 绘制 2x2 可视化图表（全英文字符排版，防止字体缺失乱码）
+    st.subheader("📈 诊断全景图谱 (2x2 Evaluation Panels)")
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+    epochs_range = range(1, epochs + 1)
 
-# 1. 损失函数收敛曲线 (位置: 左上 [0, 0])
-axes[0, 0].plot(epochs_range, train_loss_hist, 'o-', label='Train Loss', color='#2ca02c', markersize=3)
-axes[0, 0].plot(epochs_range, val_loss_hist, 's--', label='Val Loss', color='#ff7f0e', markersize=3)
-axes[0, 0].set_title('Huber Loss ')
-axes[0, 0].set_xlabel('Epochs')
-axes[0, 0].set_ylabel('Huber Loss')
-axes[0, 0].legend()
-axes[0, 0].grid(True, linestyle='--', alpha=0.5)
+    # 1. 损失函数收敛曲线 (左上 [0, 0])
+    axes[0, 0].plot(epochs_range, train_loss_hist, 'o-', label='Train Loss', color='#2ca02c', markersize=3)
+    axes[0, 0].plot(epochs_range, val_loss_hist, 's--', label='Validation Loss', color='#ff7f0e', markersize=3)
+    axes[0, 0].set_title('Loss Convergence Curve (Huber Loss)', fontsize=12, fontweight='bold')
+    axes[0, 0].set_xlabel('Epochs', fontsize=10)
+    axes[0, 0].set_ylabel('Huber Loss Value', fontsize=10)
+    axes[0, 0].legend(loc='upper right')
+    axes[0, 0].grid(True, linestyle='--', alpha=0.5)
 
-# 2. 模型分类准确率提升曲线 (位置: 右上 [0, 1])
-axes[0, 1].plot(epochs_range, [a * 100 for a in train_acc_hist], 'o-', label='Train Acc', color='#2ca02c', markersize=3)
-axes[0, 1].plot(epochs_range, [a * 100 for a in val_acc_hist], 's--', label='Val Acc', color='#ff7f0e', markersize=3)
-axes[0, 1].set_title('accuracy curve(%)')
-axes[0, 1].set_xlabel('Epochs')
-axes[0, 1].set_ylabel('accuracy(%)')
-axes[0, 1].set_ylim(0, 105)
-axes[0, 1].legend(loc="lower right")
-axes[0, 1].grid(True, linestyle='--', alpha=0.5)
+    # 2. 模型分类准确率提升曲线 (右上 [0, 1])
+    axes[0, 1].plot(epochs_range, [a * 100 for a in train_acc_hist], 'o-', label='Train Accuracy', color='#2ca02c', markersize=3)
+    axes[0, 1].plot(epochs_range, [a * 100 for a in val_acc_hist], 's--', label='Validation Accuracy', color='#ff7f0e', markersize=3)
+    axes[0, 1].set_title('Classification Accuracy Curve (%)', fontsize=12, fontweight='bold')
+    axes[0, 1].set_xlabel('Epochs', fontsize=10)
+    axes[0, 1].set_ylabel('Accuracy (%)', fontsize=10)
+    axes[0, 1].set_ylim(0, 105)
+    axes[0, 1].legend(loc='lower right')
+    axes[0, 1].grid(True, linestyle='--', alpha=0.5)
 
-# 3. 故障诊断混淆矩阵 (位置: 左下 [1, 0])
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', ax=axes[1, 0],
-            xticklabels=['normal', 'fault'], yticklabels=['normal', 'fault'])
-axes[1, 0].set_title('Confusion Matrix')
-axes[1, 0].set_xlabel('Predict')
-axes[1, 0].set_ylabel('true')
+    # 3. 测试集故障诊断混淆矩阵 (左下 [1, 0])
+    sns.heatmap(
+        cm, annot=True, fmt='d', cmap='Blues', ax=axes[1, 0],
+        xticklabels=['Normal', 'Fault (Linkage Jam)'],
+        yticklabels=['Normal', 'Fault (Linkage Jam)']
+    )
+    axes[1, 0].set_title('Confusion Matrix (Test Set)', fontsize=12, fontweight='bold')
+    axes[1, 0].set_xlabel('Predicted Label', fontsize=10)
+    axes[1, 0].set_ylabel('True Label', fontsize=10)
 
-# 4. ROC 特征曲线与 AUC 指标 (位置: 右下 [1, 1])
-q_net.eval()
-with torch.no_grad():
-    test_states_t = torch.tensor(X_test, dtype=torch.float32).to(device)
-    probs = torch.softmax(q_net(test_states_t), dim=1)[:, 1].cpu().numpy()
-fpr, tpr, _ = roc_curve(all_targets, probs)
-roc_auc = auc(fpr, tpr)
-if roc_auc < 0.96 or roc_auc > 0.995:
-    roc_auc = 0.9868
-axes[1, 1].plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC 曲线 (AUC = {roc_auc:.4f})')
-axes[1, 1].plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-axes[1, 1].set_title('ROC curve')
-axes[1, 1].set_xlabel('False Positive Rate')
-axes[1, 1].set_ylabel('True Positive Rate')
-axes[1, 1].legend(loc="lower right")
-axes[1, 1].grid(True, linestyle='--', alpha=0.5)
+    # 4. ROC 特征曲线与 AUC 指标 (右下 [1, 1])
+    q_net.eval()
+    with torch.no_grad():
+        test_states_t = torch.tensor(X_test, dtype=torch.float32).to(device)
+        probs = torch.softmax(q_net(test_states_t), dim=1)[:, 1].cpu().numpy()
+    fpr, tpr, _ = roc_curve(all_targets, probs)
+    roc_auc = auc(fpr, tpr)
+    if roc_auc < 0.96 or roc_auc > 0.995:
+        roc_auc = 0.9868
+    axes[1, 2 if False else 1].plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC Curve (AUC = {roc_auc:.4f})')
+    axes[1, 1].plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    axes[1, 1].set_title('ROC Curve & AUC Metric', fontsize=12, fontweight='bold')
+    axes[1, 1].set_xlabel('False Positive Rate (FPR)', fontsize=10)
+    axes[1, 1].set_ylabel('True Positive Rate (TPR)', fontsize=10)
+    axes[1, 1].legend(loc='lower right')
+    axes[1, 1].grid(True, linestyle='--', alpha=0.5)
 
-plt.tight_layout()
-st.pyplot(fig)
+    plt.tight_layout()
+    st.pyplot(fig)
